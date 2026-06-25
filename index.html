@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SANDRA TEXTILES S.R.L. - Asistencia</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <button class="mobileMenuBtn" id="mobileMenuBtn">☰</button>
+  <div class="mobileOverlay" id="mobileOverlay"></div>
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="mark">ST</div>
+      <div class="sand">SANDRA</div>
+      <div class="textiles">TEXTILES S.R.L.</div>
+    </div>
+    <nav class="navMenu">
+      <button class="nav active" data-view="dashboard">⌂ Dashboard</button>
+      <button class="nav" data-view="asistencia">▣ Asistencia</button>
+      <button class="nav" data-view="trabajadores">♙ Trabajadores</button>
+      <button class="nav" data-view="personal">👤 Personal</button>
+      <button class="nav" data-view="reportes">▤ Reportes</button>
+    </nav>
+    <div class="sideFooter"><b>Sistema online</b><span>Supabase conectado</span><small>V3.1 Mobile</small></div>
+  </aside>
+
+  <main class="main">
+    <header class="top">
+      <div><h1>SANDRA TEXTILES S.R.L.</h1><p>Control de asistencia en tiempo real</p></div>
+      <div class="adminBox"><span class="statusDot"></span><b>Administrador</b><select><option>Administrador</option><option>Encargado</option></select></div>
+    </header>
+
+    <section id="dashboard" class="view">
+      <div class="titlebar">
+        <div><h2>Dashboard</h2><p class="muted">Resumen del día seleccionado</p></div>
+        <div class="controls"><input type="date" id="fechaFiltro"><button class="gold" id="btnActualizar">⟳ Actualizar</button></div>
+      </div>
+
+      <div class="cards">
+        <div class="card"><div class="cardBody"><div class="circle">👥</div><div><div class="num" id="presentes">0</div><div>Presentes</div></div></div><div class="details">Trabajadores con registro</div></div>
+        <div class="card"><div class="cardBody"><div class="circle">👤</div><div><div class="num" id="ausentes">0</div><div>Ausentes</div></div></div><div class="details">Sin asistencia</div></div>
+        <div class="card"><div class="cardBody"><div class="circle">🕘</div><div><div class="num" id="retrasos">0</div><div>Retrasos</div></div></div><div class="details">Marcaciones con retraso</div></div>
+        <div class="card"><div class="cardBody"><div class="circle">✓</div><div><div class="num" id="total">0</div><div>Total</div></div></div><div class="details">Trabajadores activos</div></div>
+      </div>
+
+      <div class="panel">
+        <div class="panelHead"><h3>Asistencia de hoy</h3><span id="lastUpdate" class="muted"></span></div>
+        <div class="tableWrap">
+          <table>
+            <thead><tr><th>#</th><th>Trabajador</th><th>Área</th><th>Entrada 08:00</th><th>Salida 12:00</th><th>Retorno 14:00</th><th>Salida 18:00</th><th>Estado</th><th>Foto</th></tr></thead>
+            <tbody id="tablaDashboard"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panelHead"><h3>Últimas marcaciones</h3><span class="muted">Actualización automática cada 5 segundos</span></div>
+        <div id="ultimasMarcaciones" class="recentList"></div>
+      </div>
+
+      <div class="bottomInfo">
+        <div class="info"><b>🗓 Horario Normal</b><br>08:00 - 12:00 / 14:00 - 18:00<br><small>Lunes a Viernes</small></div>
+        <div class="info"><b>🗓 Sábado</b><br>Medio día: 08:00 - 12:00<br>Completo: 08:00 - 12:00 / 14:00 - 18:00</div>
+        <div class="info"><b>🗓 Domingo</b><br>Solo trabajos extraordinarios</div>
+      </div>
+    </section>
+
+    <section id="asistencia" class="view hidden">
+      <div class="titlebar"><div><h2>Registrar asistencia</h2><p class="muted">El encargado registra las marcaciones.</p></div></div>
+      <div class="panel">
+        <div class="grid">
+          <div>
+            <label>Trabajador<select id="trabajadorSelect"></select></label>
+            <label>Tipo de registro<select id="tipoRegistro">
+              <option>Entrada 08:00</option><option>Salida 12:00</option><option>Retorno 14:00</option><option>Salida 18:00</option><option>Retraso</option><option>Ausente</option><option>Permiso</option><option>Sábado medio día</option><option>Sábado completo</option><option>Domingo extraordinario</option>
+            </select></label>
+            <label>Observación<input id="observacion" placeholder="Opcional"></label>
+            <div class="cameraBox">
+              <label>Foto obligatoria</label>
+              <div class="cameraButtons">
+                <button type="button" class="gold" id="btnAbrirCamara">📷 Abrir cámara</button>
+                <button type="button" class="btnEdit" id="btnTomarFoto" disabled>Tomar foto</button>
+                <button type="button" class="btnDanger" id="btnCerrarCamara" disabled>Cerrar cámara</button>
+              </div>
+              <input id="fotoInput" class="fallbackFile" type="file" accept="image/*" capture="environment">
+              <small class="muted">También puedes usar "Seleccionar archivo" si la cámara no está disponible.</small>
+            </div>
+
+            <button class="gold wide" id="btnGuardarAsistencia">Guardar asistencia</button>
+            <div id="msgAsistencia" class="msg"></div>
+          </div>
+          <div>
+            <h3>Cámara / Vista previa</h3>
+            <video id="cameraVideo" autoplay playsinline muted></video>
+            <canvas id="cameraCanvas" class="hidden"></canvas>
+            <img id="preview">
+            <p class="muted">En PC usa la webcam. En celular usa la cámara del navegador.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="trabajadores" class="view hidden">
+      <div class="titlebar"><div><h2>Trabajadores</h2><p class="muted">Agrega o desactiva personal.</p></div></div>
+      <div class="panel">
+        <div class="grid compact">
+          <input id="nuevoNombre" placeholder="Nombre del trabajador">
+          <input id="nuevaArea" placeholder="Área">
+        </div>
+        <button class="gold" id="btnAgregarTrabajador">Agregar trabajador</button>
+        <div id="msgTrabajador" class="msg"></div>
+        <div class="searchBox"><input id="buscarTrabajador" placeholder="Buscar trabajador por nombre o área"></div>
+        <div id="listaTrabajadores" class="workers"></div>
+      </div>
+    </section>
+
+    <section id="personal" class="view hidden">
+      <div class="titlebar">
+        <div>
+          <h2>Personal</h2>
+          <p class="muted">Ficha completa del trabajador para uso interno.</p>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Registrar ficha de personal</h3>
+        <div class="personalForm">
+          <input id="pNombre" placeholder="Nombre completo">
+          <input id="pCI" placeholder="CI">
+          <input id="pCargo" placeholder="Cargo">
+          <input id="pArea" placeholder="Área">
+          <input id="pTelefono" placeholder="Teléfono">
+          <input id="pIngreso" type="date">
+          <input id="pDireccion" placeholder="Dirección">
+          <select id="pEstado">
+            <option>Activo</option>
+            <option>Inactivo</option>
+          </select>
+        </div>
+        <button class="gold" id="btnGuardarPersonal">Guardar ficha</button>
+        <div id="msgPersonal" class="msg"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panelHead">
+          <h3>Fichas de personal</h3>
+          <input id="buscarPersonal" placeholder="Buscar por nombre, CI, cargo o área">
+        </div>
+        <div id="listaPersonal" class="personalCards"></div>
+      </div>
+    </section>
+
+    <section id="reportes" class="view hidden">
+      <div class="panel">
+        <div class="titlebar"><div><h2>Reporte Diario</h2><p class="muted">Todos los registros del día seleccionado.</p></div><button class="gold" id="btnActualizarReporte">Actualizar</button></div>
+        <div class="reportSummary">
+          <div class="info"><b>Total registros</b><br><span id="repTotal">0</span></div>
+          <div class="info"><b>Con foto</b><br><span id="repFotos">0</span></div>
+          <div class="info"><b>Fecha</b><br><span id="repFecha">-</span></div>
+        </div>
+        <div class="tableWrap"><table><thead><tr><th>Hora</th><th>Trabajador</th><th>Área</th><th>Registro</th><th>Estado</th><th>Foto</th><th>Observación</th></tr></thead><tbody id="tablaReporte"></tbody></table></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal" id="fotoModal"><div class="modalCard"><img id="fotoGrande"><button class="gold" id="cerrarFoto">Cerrar</button></div></div>
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,3 @@
+const SUPABASE_URL = "https://xldufxhvxxhayjcmrqfp.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhsZHVmeGh2eHhoYXlqY21ycWZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODU1NDgsImV4cCI6MjA5Nzk2MTU0OH0.rBOdIlwDwKHMDXXnfAqQlR4BsN4AIdQZ42PiXLrLuu4";
+const STORAGE_BUCKET = "asistencia-fotos";
