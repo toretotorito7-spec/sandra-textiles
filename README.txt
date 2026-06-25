@@ -1,20 +1,26 @@
-SANDRA TEXTILES S.R.L. - V4 ENTERPRISE
+SANDRA TEXTILES S.R.L. - V4.1 ESTABLE
 
-Base: V3.2 con cámara PC/celular.
+Objetivo:
+Sistema temporal y estable mientras se termina el sistema completo.
 
 Incluye:
-- Nuevo diseño enterprise.
-- Menú ERP.
-- Dashboard profesional.
-- Asistencia con cámara PC y celular.
+- Dashboard Enterprise.
+- Asistencia con cámara en PC y celular.
 - Trabajadores.
 - Personal.
-- Planillas inicial.
-- Reportes.
-- Configuración.
-- Supabase y Vercel.
+- Reportes básicos.
+- Exportación CSV del reporte diario.
+- Planillas temporales basadas en asistencia.
+- Indicador de guardado.
+- Supabase + Storage + Vercel + GitHub.
 
-Para usar:
-1. Mantén js/config.js con tu Supabase URL y anon key.
-2. Si no ejecutaste campos de Personal, ejecuta sql/v4_enterprise.sql.
-3. Sube esta carpeta a GitHub o Vercel.
+No incluye:
+- Producción.
+- Inventario.
+- Órdenes de trabajo.
+- ERP completo.
+
+Para actualizar:
+1. Subir estos archivos al repositorio GitHub sandra-textiles.
+2. Hacer commit: Sandra Textiles V4.1 Estable.
+3. Vercel desplegará automáticamente.

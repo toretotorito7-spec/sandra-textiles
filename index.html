@@ -20,7 +20,7 @@
           <div class="textiles">TEXTILES S.R.L.</div>
         </div>
       </div>
-      <div class="brandBadge">Enterprise V4</div>
+      <div class="brandBadge">V4.1 Estable</div>
     </div>
 
     <nav class="navMenu">
@@ -46,7 +46,7 @@
     <header class="top">
       <div>
         <h1>SANDRA TEXTILES S.R.L.</h1>
-        <p>Sistema empresarial de asistencia y personal</p>
+        <p>Sistema temporal de asistencia y personal</p>
       </div>
       <div class="topActions">
         <div class="pill"><span class="statusDot"></span> Online</div>
@@ -196,12 +196,12 @@
           <div class="infoCard"><b>Retrasos</b><span id="plRetrasos">0</span></div>
           <div class="infoCard"><b>Faltas</b><span id="plFaltas">0</span></div>
         </div>
-        <p class="muted">En la siguiente etapa se agregará cálculo por trabajador, descuentos, bonos y exportación a Excel/PDF.</p>
+        <p class="muted">Vista temporal basada en asistencia del día. El sistema completo de planillas se desarrollará aparte.</p>
       </div>
     </section>
 
     <section id="reportes" class="view hidden">
-      <div class="sectionHead"><h2>Reportes</h2><p class="muted">Resumen diario y exportaciones futuras.</p></div>
+      <div class="sectionHead"><h2>Reportes</h2><p class="muted">Resumen diario de asistencia.</p><button class="btnPrimary" id="btnExportarCSV">Exportar CSV</button></div>
       <div class="panel">
         <div class="reportSummary">
           <div class="infoCard"><b>Total registros</b><span id="repTotal">0</span></div>
@@ -228,6 +228,8 @@
       </div>
     </section>
   </main>
+
+  <div class="savingOverlay" id="savingOverlay"><div class="savingCard">Guardando información...</div></div>
 
   <div class="modal" id="fotoModal"><div class="modalCard"><img id="fotoGrande"><button class="btnPrimary" id="cerrarFoto">Cerrar</button></div></div>
 

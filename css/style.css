@@ -29,3 +29,28 @@ select,input,button{font-size:15px;border-radius:12px;border:1px solid var(--lin
 @media(max-width:1100px){.dashboardGrid,.formLayout{grid-template-columns:1fr}.kpiGrid{grid-template-columns:repeat(2,1fr)}.sidePanel{order:-1}}
 @media(max-width:900px){body{display:block;padding-top:64px}.mobileMenuBtn{display:block}.sidebar{position:fixed;left:-310px;top:0;height:100vh;width:300px;z-index:50;transition:left .22s ease;overflow:auto}.menuOpen .sidebar{left:0}.menuOpen .mobileOverlay{display:block}.main{padding:16px}.top{flex-wrap:wrap}.top h1{font-size:22px}.topActions{width:100%;justify-content:space-between}.hero,.sectionHead{display:block}.hero h2,.sectionHead h2{font-size:26px}.controls{margin-top:14px}.controls input,.controls button{flex:1}.infoGrid,.reportSummary,.personalForm,.personalCards{grid-template-columns:1fr}.inlineForm{grid-template-columns:1fr}table{min-width:900px}.cameraButtons{display:grid;grid-template-columns:1fr}.panel{padding:14px}}
 @media(max-width:520px){.kpiGrid{grid-template-columns:1fr}.brandTop{align-items:flex-start}.sand{font-size:19px}.textiles{font-size:11px}.modal img{max-width:90vw}}
+
+/* V4.1 estable */
+.savingOverlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.35);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:80;
+}
+.savingOverlay.show{display:flex}
+.savingCard{
+  background:#111d27;
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:18px 24px;
+  color:var(--gold2);
+  font-weight:800;
+  box-shadow:var(--shadow);
+}
+.sideFooter b::after{content:" · V4.1"; color:var(--gold2)}
+@media(max-width:900px){
+  .sectionHead .btnPrimary{width:100%;margin-top:12px}
+}
