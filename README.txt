@@ -1,20 +1,20 @@
-SANDRA TEXTILES S.R.L. - V3.2 CÁMARA PC Y CELULAR
+SANDRA TEXTILES S.R.L. - V4 ENTERPRISE
 
-Basado en V3.1 Mobile.
+Base: V3.2 con cámara PC/celular.
 
-Novedades:
-- Botón "Abrir cámara".
-- Funciona con webcam en PC.
-- Funciona con cámara del navegador en celular.
-- Botón "Tomar foto".
-- Mantiene opción "Seleccionar archivo" como respaldo.
-- Mantiene Supabase, Personal, Dashboard, Reportes y Fotos.
+Incluye:
+- Nuevo diseño enterprise.
+- Menú ERP.
+- Dashboard profesional.
+- Asistencia con cámara PC y celular.
+- Trabajadores.
+- Personal.
+- Planillas inicial.
+- Reportes.
+- Configuración.
+- Supabase y Vercel.
 
-IMPORTANTE:
-Para usar cámara en PC/celular debe estar publicado en HTTPS.
-Vercel ya usa HTTPS automáticamente.
-
-Para actualizar Vercel:
-1. Descomprime este ZIP.
-2. En Vercel crea una nueva implementación subiendo esta carpeta completa.
-3. O reemplaza el proyecto con esta versión.
+Para usar:
+1. Mantén js/config.js con tu Supabase URL y anon key.
+2. Si no ejecutaste campos de Personal, ejecuta sql/v4_enterprise.sql.
+3. Sube esta carpeta a GitHub o Vercel.
