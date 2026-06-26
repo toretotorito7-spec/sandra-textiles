@@ -1,13 +1,23 @@
-SANDRA TEXTILES S.R.L. - V4.1.2 HORAS EN DASHBOARD
+SANDRA TEXTILES S.R.L. - V4.1.3 FIX TRABAJADOR
 
-Corrección:
-- El Dashboard ahora muestra hora aunque el tipo de registro no sea exactamente "Entrada 08:00".
-- Detecta mejor: entrada, ingreso, retraso, salida 12, sábado medio día, retorno, salida 18 y sábado completo.
-- Si un trabajador tiene una marcación con hora, aparece en la columna Entrada si no hay otra columna exacta.
-- Corrige casos donde Pablo Huanca o Marco Paredes aparecían sin hora aunque tenían registro.
+Corrección principal:
+- El trabajador seleccionado queda guardado en memoria.
+- El sistema ya no debe volver al primer trabajador al actualizarse.
+- Antes de guardar asistencia muestra confirmación con el nombre real del trabajador.
+- Si ves "Edgar Azurduy" en la confirmación, cancela y selecciona otra vez.
 
-Actualizar:
+También mantiene:
+- Corrección de horas en Dashboard.
+- Cámara PC/celular.
+- Reportes.
+- Personal.
+- Exportación CSV.
+
+MUY IMPORTANTE:
+El correo de Vercel indica que el despliegue falló. Eso significa que la página publicada todavía puede estar usando una versión anterior.
+
+Para actualizar:
 1. Descomprime este ZIP.
-2. Sube todo a GitHub reemplazando los archivos anteriores.
-3. Commit: Sandra Textiles V4.1.2 Horas Dashboard.
-4. Vercel desplegará automáticamente.
+2. Sube todo el contenido a GitHub reemplazando archivos.
+3. Commit: Sandra Textiles V4.1.3 Fix trabajador.
+4. En Vercel > Deployments confirma que el último despliegue diga READY.
