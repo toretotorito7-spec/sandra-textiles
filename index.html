@@ -20,7 +20,7 @@
           <div class="textiles">TEXTILES S.R.L.</div>
         </div>
       </div>
-      <div class="brandBadge">V4.1.4 Horas</div>
+      <div class="brandBadge">V4.1.7 Retrasos</div>
     </div>
 
     <nav class="navMenu">
@@ -75,6 +75,23 @@
         <div class="kpi"><div class="kpiIcon red">!</div><div><small>Ausentes</small><strong id="ausentes">0</strong></div><span>Sin registro / ausente</span></div>
         <div class="kpi"><div class="kpiIcon orange">⏱</div><div><small>Retrasos</small><strong id="retrasos">0</strong></div><span>Marcados con retraso</span></div>
         <div class="kpi"><div class="kpiIcon gold">👷</div><div><small>Total</small><strong id="total">0</strong></div><span>Trabajadores activos</span></div>
+      </div>
+
+      <div class="alertGrid">
+        <div class="alertPanel late">
+          <div class="panelHead">
+            <h3>⚠ Llegaron tarde</h3>
+            <span class="muted">Entrada después de 08:00</span>
+          </div>
+          <div id="listaRetrasosDash" class="alertList"></div>
+        </div>
+        <div class="alertPanel missing">
+          <div class="panelHead">
+            <h3>⛔ No llegaron</h3>
+            <span class="muted">Sin entrada registrada</span>
+          </div>
+          <div id="listaAusentesDash" class="alertList"></div>
+        </div>
       </div>
 
       <div class="dashboardGrid">
@@ -176,6 +193,7 @@
           <input id="pTelefono" placeholder="Teléfono">
           <input id="pIngreso" type="date">
           <input id="pDireccion" placeholder="Dirección">
+          <input id="pSueldo" type="number" step="0.01" placeholder="Sueldo mensual Bs">
           <select id="pEstado"><option>Activo</option><option>Inactivo</option></select>
         </div>
         <button class="btnPrimary" id="btnGuardarPersonal">Guardar ficha</button>
@@ -190,8 +208,8 @@
     <section id="planillas" class="view hidden">
       <div class="sectionHead">
         <div>
-          <h2>Horas trabajadas</h2>
-          <p class="muted">Cálculo por día, semana y mes para apoyo en el pago de sueldos.</p>
+          <h2>Planilla mensual</h2>
+          <p class="muted">Cálculo de sueldo según horas trabajadas, feriados y sábados variables.</p>
         </div>
         <button class="btnPrimary" id="btnExportarPlanilla">Descargar planilla CSV</button>
       </div>
@@ -200,44 +218,51 @@
         <div class="planillaFilters">
           <label>Periodo
             <select id="periodoPlanilla">
-              <option value="dia">Día</option>
-              <option value="semana">Semana</option>
               <option value="mes">Mes</option>
+              <option value="semana">Semana</option>
+              <option value="dia">Día</option>
             </select>
           </label>
           <label>Fecha base
             <input type="date" id="fechaPlanilla">
           </label>
           <label>Trabajador
-            <select id="trabajadorPlanilla">
-              <option value="">Todos</option>
-            </select>
+            <select id="trabajadorPlanilla"><option value="">Todos</option></select>
           </label>
           <button class="btnPrimary" id="btnCalcularPlanilla">Calcular</button>
         </div>
 
         <div class="planillaResumen">
           <div class="infoCard"><b>Periodo</b><span id="plPeriodoTexto">-</span></div>
-          <div class="infoCard"><b>Total horas</b><span id="plTotalHoras">0:00</span></div>
-          <div class="infoCard"><b>Trabajadores</b><span id="plTotalTrabajadores">0</span></div>
+          <div class="infoCard"><b>Horas trabajadas</b><span id="plTotalHoras">0:00</span></div>
+          <div class="infoCard"><b>Total a pagar</b><span id="plTotalPagar">Bs 0.00</span></div>
         </div>
 
         <div class="tableWrap">
           <table>
             <thead>
               <tr>
-                <th>Trabajador</th>
-                <th>Área</th>
-                <th>Días con registro</th>
-                <th>Horas trabajadas</th>
-                <th>Retrasos</th>
-                <th>Faltas estimadas</th>
-                <th>Detalle</th>
+                <th>Trabajador</th><th>Área</th><th>Sueldo mensual</th><th>Horas esperadas</th>
+                <th>Horas trabajadas</th><th>Horas faltantes</th><th>Horas extra</th>
+                <th>Feriados</th><th>Retrasos</th><th>Total a pagar</th>
               </tr>
             </thead>
             <tbody id="tablaPlanillas"></tbody>
           </table>
         </div>
+      </div>
+
+      <div class="panel">
+        <div class="panelHead">
+          <h3>Feriados del periodo</h3>
+          <span class="muted">Los feriados no cuentan como horas esperadas.</span>
+        </div>
+        <div class="inlineForm">
+          <input id="feriadoFecha" type="date">
+          <input id="feriadoNombre" placeholder="Nombre del feriado">
+          <button class="btnPrimary" id="btnAgregarFeriado">Agregar feriado</button>
+        </div>
+        <div id="listaFeriados" class="workers"></div>
       </div>
 
       <div class="panel">
@@ -249,14 +274,8 @@
           <table>
             <thead>
               <tr>
-                <th>Fecha</th>
-                <th>Trabajador</th>
-                <th>Entrada</th>
-                <th>Salida 12:00</th>
-                <th>Retorno</th>
-                <th>Salida 18:00</th>
-                <th>Horas</th>
-                <th>Estado</th>
+                <th>Fecha</th><th>Trabajador</th><th>Entrada</th><th>Salida 12:00</th>
+                <th>Retorno</th><th>Salida 18:00</th><th>Horas</th><th>Esperadas</th><th>Feriado</th><th>Estado</th>
               </tr>
             </thead>
             <tbody id="tablaDetallePlanilla"></tbody>
@@ -266,9 +285,11 @@
     </section>
 
 
+
     <section id="reportes" class="view hidden">
       <div class="sectionHead"><h2>Reportes</h2><p class="muted">Resumen diario de asistencia.</p><button class="btnPrimary" id="btnExportarCSV">Exportar CSV</button></div>
       <div class="panel">
+        <div class="reportAlerts"><div><b>⚠ Retrasos detectados:</b> <span id="repRetrasos">0</span></div><div><b>⛔ Ausentes detectados:</b> <span id="repAusentes">0</span></div></div>
         <div class="reportSummary">
           <div class="infoCard"><b>Total registros</b><span id="repTotal">0</span></div>
           <div class="infoCard"><b>Con foto</b><span id="repFotos">0</span></div>

@@ -78,3 +78,53 @@ select,input,button{font-size:15px;border-radius:12px;border:1px solid var(--lin
   .planillaFilters{grid-template-columns:1fr}
   .planillaResumen{grid-template-columns:1fr}
 }
+
+/* V4.1.5 Planilla mensual */
+.planillaFilters{display:grid;grid-template-columns:1fr 1fr 1.5fr auto;gap:12px;align-items:end;margin-bottom:18px}
+.planillaFilters label{display:grid;gap:8px;color:var(--gold2)}
+.planillaResumen{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:18px}
+@media(max-width:900px){.planillaFilters{grid-template-columns:1fr}.planillaResumen{grid-template-columns:1fr}}
+
+/* V4.1.7 Retrasos y ausentes */
+.alertGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+  margin-bottom:20px;
+}
+.alertPanel{
+  background:rgba(17,29,39,.95);
+  border:1px solid var(--line);
+  border-radius:20px;
+  padding:16px;
+  box-shadow:var(--shadow);
+}
+.alertPanel.late{border-color:rgba(255,190,50,.45)}
+.alertPanel.missing{border-color:rgba(255,93,93,.45)}
+.alertList{display:grid;gap:10px}
+.alertItem{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:center;
+  border:1px solid rgba(199,168,103,.16);
+  background:rgba(255,255,255,.035);
+  border-radius:14px;
+  padding:12px;
+}
+.reportAlerts{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-bottom:14px;
+}
+.reportAlerts>div{
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:12px;
+  background:rgba(255,255,255,.035);
+  color:var(--gold2);
+}
+@media(max-width:900px){
+  .alertGrid,.reportAlerts{grid-template-columns:1fr}
+}
