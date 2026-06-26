@@ -1,17 +1,167 @@
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-let trabajadores=[],registros=[],fotoFile=null,cameraStream=null,trabajadorSeleccionadoId=null,planillaRegistros=[],planillaResumen=[],planillaDetalle=[];
+let trabajadores=[],registros=[],fotoFile=null,cameraStream=null,trabajadorSeleccionadoId=null,planillaRegistros=[],planillaResumen=[],planillaDetalle=[],feriados=[],centroActivo='Bloqueado',usuarioActual=null,perfilActual=null;
 const $=id=>document.getElementById(id);
+
+function requireAuth(mensaje=true){
+ if(!usuarioActual || !perfilActual){
+   if(mensaje) alert('Debes iniciar sesión para usar el sistema.');
+   mostrarApp(false);
+   return false;
+ }
+ return true;
+}
+function mostrarApp(show){
+ document.body.classList.toggle('autenticado', !!show);
+ const login=$('loginScreen');
+ if(login) login.style.display=show?'none':'flex';
+}
+function aplicarCentroPorPerfil(){
+ if(!perfilActual){centroActivo='Bloqueado';return}
+ if(perfilActual.rol==='Administrador'){
+   centroActivo=localStorage.getItem('centroActivoST') || 'Todos';
+   if($('modoAcceso')){
+     $('modoAcceso').style.display='block';
+     $('modoAcceso').disabled=false;
+     $('modoAcceso').value=centroActivo;
+   }
+ }else{
+   centroActivo=perfilActual.centro_trabajo || 'Fábrica Santa Cruz';
+   if($('modoAcceso')){
+     $('modoAcceso').style.display='block';
+     $('modoAcceso').disabled=true;
+     $('modoAcceso').value=centroActivo;
+   }
+ }
+ actualizarCentroUI();
+}
+async function cargarPerfilSeguro(){
+ if(!usuarioActual) return false;
+ const {data,error}=await sb.from('perfiles').select('*').eq('user_id',usuarioActual.id).single();
+ if(error || !data){
+   console.error(error);
+   alert('El usuario existe, pero no tiene perfil asignado. Revisa la tabla perfiles.');
+   await sb.auth.signOut();
+   usuarioActual=null;perfilActual=null;
+   mostrarApp(false);
+   return false;
+ }
+ perfilActual=data;
+ aplicarCentroPorPerfil();
+ return true;
+}
+async function verificarSesion(){
+ const {data:{session}}=await sb.auth.getSession();
+ if(!session){
+   usuarioActual=null;perfilActual=null;
+   mostrarApp(false);
+   return;
+ }
+ usuarioActual=session.user;
+ const ok=await cargarPerfilSeguro();
+ if(ok){
+   mostrarApp(true);
+   await loadAll();
+ }
+}
+async function login(){
+ const email=($('loginEmail')?.value||'').trim();
+ const password=$('loginPassword')?.value||'';
+ if(!email || !password){
+   msg('msgLogin','Correo y contraseña son obligatorios.','error');
+   return;
+ }
+ msg('msgLogin','Ingresando...');
+ const {data,error}=await sb.auth.signInWithPassword({email,password});
+ if(error){
+   msg('msgLogin','Usuario o contraseña incorrectos.','error');
+   return;
+ }
+ usuarioActual=data.user;
+ const ok=await cargarPerfilSeguro();
+ if(!ok) return;
+ mostrarApp(true);
+ msg('msgLogin','');
+ await loadAll();
+}
+async function logout(){
+ await sb.auth.signOut();
+ usuarioActual=null;perfilActual=null;centroActivo='Bloqueado';
+ mostrarApp(false);
+}
+
 const today=()=>new Date().toISOString().slice(0,10);
 function msg(id,t,c=''){const e=$(id);if(!e)return;e.textContent=t;e.className='msg '+c}
 function setSaving(show){const el=$('savingOverlay');if(el)el.classList.toggle('show',!!show)}
 function esc(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;")}
+
+function mostrarApp(show){
+ document.body.classList.toggle('autenticado', !!show);
+ if($('loginScreen')) $('loginScreen').style.display = show ? 'none' : 'flex';
+}
+async function verificarSesion(){
+ const {data:{session}} = await sb.auth.getSession();
+ if(!session){mostrarApp(false);return}
+ usuarioActual=session.user;
+ await cargarPerfil();
+ mostrarApp(true);
+ await loadAll();
+}
+async function login(){
+ const email=$('loginEmail').value.trim();
+ const password=$('loginPassword').value;
+ if(!email || !password){msg('msgLogin','Escribe correo y contraseña.','error');return}
+ msg('msgLogin','Ingresando...');
+ const {data,error}=await sb.auth.signInWithPassword({email,password});
+ if(error){msg('msgLogin','Error: '+error.message,'error');return}
+ usuarioActual=data.user;
+ await cargarPerfil();
+ mostrarApp(true);
+ msg('msgLogin','');
+ await loadAll();
+}
+async function logout(){
+ await sb.auth.signOut();
+ usuarioActual=null;perfilActual=null;centroActivo='Todos';
+ mostrarApp(false);
+}
+async function cargarPerfil(){
+ if(!usuarioActual){mostrarApp(false);return}
+ const {data,error}=await sb.from('perfiles').select('*').eq('user_id',usuarioActual.id).single();
+ if(error || !data){
+   alert('Este usuario no tiene perfil configurado. Crea su perfil en Supabase.');
+   await sb.auth.signOut();
+   mostrarApp(false);
+   return;
+ }
+ perfilActual=data;
+ if(perfilActual.rol==='Administrador'){
+   centroActivo=localStorage.getItem('centroActivoST')||'Todos';
+   if($('modoAcceso')){$('modoAcceso').disabled=false;$('modoAcceso').style.display='block';$('modoAcceso').value=centroActivo;}
+ }else{
+   centroActivo=perfilActual.centro_trabajo || 'Fábrica Santa Cruz';
+   if($('modoAcceso')){$('modoAcceso').value=centroActivo;$('modoAcceso').disabled=true;$('modoAcceso').style.display='none';}
+ }
+ actualizarCentroUI();
+}
+
 function init(){
- $('fechaFiltro').value=today(); if($('fechaPlanilla')) $('fechaPlanilla').value=today(); if($('fechaPlanilla')) $('fechaPlanilla').value=today();
+ mostrarApp(false);
+ if($('btnLogin')) $('btnLogin').onclick=login;
+ if($('loginPassword')) $('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+ if($('btnLogout')) $('btnLogout').onclick=logout;
  if($('mobileMenuBtn')) $('mobileMenuBtn').onclick=()=>document.body.classList.toggle('menuOpen');
  if($('mobileOverlay')) $('mobileOverlay').onclick=()=>document.body.classList.remove('menuOpen');
  document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>show(b.dataset.view,b));
- $('btnActualizar').onclick=loadAll;$('btnAgregarTrabajador').onclick=agregarTrabajador;$('btnGuardarAsistencia').onclick=registrarAsistencia;$('cerrarFoto').onclick=cerrarFoto;$('fechaFiltro').onchange=loadAll; if($('btnCalcularPlanilla')) $('btnCalcularPlanilla').onclick=calcularPlanilla; if($('btnExportarPlanilla')) $('btnExportarPlanilla').onclick=exportarPlanillaCSV; if($('btnAgregarFeriado')) $('btnAgregarFeriado').onclick=agregarFeriado; if($('periodoPlanilla')) $('periodoPlanilla').onchange=calcularPlanilla; if($('fechaPlanilla')) $('fechaPlanilla').onchange=calcularPlanilla; if($('trabajadorPlanilla')) $('trabajadorPlanilla').onchange=calcularPlanilla; if($('btnCalcularPlanilla')) $('btnCalcularPlanilla').onclick=calcularPlanilla; if($('btnExportarPlanilla')) $('btnExportarPlanilla').onclick=exportarPlanillaCSV; if($('periodoPlanilla')) $('periodoPlanilla').onchange=calcularPlanilla; if($('fechaPlanilla')) $('fechaPlanilla').onchange=calcularPlanilla; if($('trabajadorPlanilla')) $('trabajadorPlanilla').onchange=calcularPlanilla;
- if($('btnActualizarReporte')) $('btnActualizarReporte').onclick=loadAll; if($('btnExportarCSV')) $('btnExportarCSV').onclick=exportarCSV;
+ if($('fechaFiltro')) $('fechaFiltro').value=today();
+ if($('fechaPlanilla')) $('fechaPlanilla').value=today();
+ if($('modoAcceso')) $('modoAcceso').onchange=()=>{if(perfilActual?.rol==='Administrador'){centroActivo=$('modoAcceso').value;localStorage.setItem('centroActivoST',centroActivo);loadAll();}};
+ if($('btnActualizar')) $('btnActualizar').onclick=loadAll;
+ if($('btnAgregarTrabajador')) $('btnAgregarTrabajador').onclick=agregarTrabajador;
+ if($('btnGuardarAsistencia')) $('btnGuardarAsistencia').onclick=registrarAsistencia;
+ if($('cerrarFoto')) $('cerrarFoto').onclick=cerrarFoto;
+ if($('fechaFiltro')) $('fechaFiltro').onchange=loadAll;
+ if($('btnActualizarReporte')) $('btnActualizarReporte').onclick=loadAll;
+ if($('btnExportarCSV')) $('btnExportarCSV').onclick=exportarCSV;
  if($('btnGuardarPersonal')) $('btnGuardarPersonal').onclick=guardarPersonal;
  if($('buscarTrabajador')) $('buscarTrabajador').oninput=renderTrabajadores;
  if($('buscarPersonal')) $('buscarPersonal').oninput=renderPersonal;
@@ -19,17 +169,40 @@ function init(){
  if($('btnAbrirCamara')) $('btnAbrirCamara').onclick=abrirCamara;
  if($('btnTomarFoto')) $('btnTomarFoto').onclick=tomarFoto;
  if($('btnCerrarCamara')) $('btnCerrarCamara').onclick=cerrarCamara;
- $('fotoInput').onchange=e=>{fotoFile=e.target.files[0]||null;if(fotoFile){const r=new FileReader();r.onload=()=>{$('preview').src=r.result;$('preview').style.display='block';if($('cameraVideo'))$('cameraVideo').style.display='none'};r.readAsDataURL(fotoFile)}};
- realtime();loadAll();setInterval(()=>{if(!window.__loadingST)loadAll()},5000);
+ if($('btnCalcularPlanilla')) $('btnCalcularPlanilla').onclick=calcularPlanilla;
+ if($('btnExportarPlanilla')) $('btnExportarPlanilla').onclick=exportarPlanillaCSV;
+ if($('btnAgregarFeriado')) $('btnAgregarFeriado').onclick=agregarFeriado;
+ if($('periodoPlanilla')) $('periodoPlanilla').onchange=calcularPlanilla;
+ if($('fechaPlanilla')) $('fechaPlanilla').onchange=calcularPlanilla;
+ if($('trabajadorPlanilla')) $('trabajadorPlanilla').onchange=calcularPlanilla;
+ if($('fotoInput')) $('fotoInput').onchange=e=>{fotoFile=e.target.files[0]||null;if(fotoFile){const r=new FileReader();r.onload=()=>{$('preview').src=r.result;$('preview').style.display='block';if($('cameraVideo'))$('cameraVideo').style.display='none'};r.readAsDataURL(fotoFile)}};
+ realtime();
+ verificarSesion();
+ setInterval(()=>{if(usuarioActual && perfilActual && !window.__loadingST)loadAll()},5000);
 }
-function show(v,b){document.querySelectorAll('.view').forEach(x=>x.classList.add('hidden'));$(v).classList.remove('hidden');document.querySelectorAll('.nav').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.body.classList.remove('menuOpen');loadAll()}
-async function loadAll(){window.__loadingST=true;await cargarTrabajadores();await cargarRegistros();renderDashboard();renderAlertasDashboard();renderTrabajadores();renderSelect();renderPlanillaSelect();renderPlanillaSelect();renderReporte();renderUltimasMarcaciones();renderPersonal();renderPlanillas();if($('lastUpdate'))$('lastUpdate').textContent='Actualizado: '+new Date().toLocaleTimeString('es-BO',{hour:'2-digit',minute:'2-digit'});window.__loadingST=false}
-async function cargarTrabajadores(){const {data,error}=await sb.from('trabajadores').select('*').neq('estado','Inactivo').order('created_at',{ascending:true});if(error){alert('Error trabajadores: '+error.message);return}trabajadores=data||[]}
-async function cargarRegistros(){const {data,error}=await sb.from('asistencia').select('*').eq('fecha',$('fechaFiltro').value||today()).order('created_at',{ascending:true});if(error){registros=[];console.warn(error.message);return}registros=data||[]}
-async function agregarTrabajador(){const nombre=$('nuevoNombre').value.trim(),area=$('nuevaArea').value.trim()||'Sin área';if(!nombre){msg('msgTrabajador','Escribe el nombre.','error');return}msg('msgTrabajador','Guardando...');setSaving(true);const {error}=await sb.from('trabajadores').insert([{nombre,area,estado:'Activo'}]);if(error){setSaving(false);msg('msgTrabajador','Error: '+error.message,'error');return}$('nuevoNombre').value='';$('nuevaArea').value='';msg('msgTrabajador','Trabajador agregado correctamente.','success');setSaving(false);loadAll()}
+function show(v,b){if(!requireAuth(false))return;document.querySelectorAll('.view').forEach(x=>x.classList.add('hidden'));$(v).classList.remove('hidden');document.querySelectorAll('.nav').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.body.classList.remove('menuOpen');loadAll()}
+async function loadAll(){if(!requireAuth(false))return;window.__loadingST=true;actualizarCentroUI();await cargarTrabajadores();await cargarRegistros();renderDashboard();renderAlertasDashboard();renderTrabajadores();renderSelect();renderPlanillaSelect();renderPlanillaSelect();renderReporte();renderUltimasMarcaciones();renderPersonal();renderPlanillas();if($('lastUpdate'))$('lastUpdate').textContent='Actualizado: '+new Date().toLocaleTimeString('es-BO',{hour:'2-digit',minute:'2-digit'});window.__loadingST=false}
+
+function actualizarCentroUI(){
+ if($('centroActualTexto')) $('centroActualTexto').textContent=centroActivo;
+ if($('nuevoCentro') && centroActivo!=='Todos') $('nuevoCentro').value=centroActivo;
+ if($('pCentro') && centroActivo!=='Todos') $('pCentro').value=centroActivo;
+}
+function filtrarPorCentro(lista){
+ if(centroActivo==='Todos') return lista;
+ return (lista||[]).filter(x=>(x.centro_trabajo||'Fábrica Santa Cruz')===centroActivo);
+}
+function trabajadorPermitido(t){
+ if(!t) return false;
+ return centroActivo==='Todos' || (t.centro_trabajo||'Fábrica Santa Cruz')===centroActivo;
+}
+
+async function cargarTrabajadores(){const {data,error}=await sb.from('trabajadores').select('*').neq('estado','Inactivo').order('created_at',{ascending:true});if(error){alert('Error trabajadores: '+error.message);return}trabajadores=filtrarPorCentro((data||[]).map(t=>({...t,centro_trabajo:t.centro_trabajo||'Fábrica Santa Cruz'})))}
+async function cargarRegistros(){const {data,error}=await sb.from('asistencia').select('*').eq('fecha',$('fechaFiltro').value||today()).order('created_at',{ascending:true});if(error){registros=[];console.warn(error.message);return}registros=(data||[]).filter(r=>trabajadores.some(t=>String(t.id)===String(r.trabajador_id)))}
+async function agregarTrabajador(){if(!requireAuth())return;const nombre=$('nuevoNombre').value.trim(),area=$('nuevaArea').value.trim()||'Sin área',centro_trabajo=$('nuevoCentro')?.value||centroActivo||'Fábrica Santa Cruz';if(!nombre){msg('msgTrabajador','Escribe el nombre.','error');return} if(centro_trabajo==='Confecciones' && trabajadores.filter(t=>(t.centro_trabajo||'Fábrica Santa Cruz')==='Confecciones').length>=10){msg('msgTrabajador','Confecciones permite máximo 10 trabajadores.','error');return}msg('msgTrabajador','Guardando...');setSaving(true);const {error}=await sb.from('trabajadores').insert([{nombre,area,estado:'Activo',centro_trabajo}]);if(error){setSaving(false);msg('msgTrabajador','Error: '+error.message,'error');return}$('nuevoNombre').value='';$('nuevaArea').value='';msg('msgTrabajador','Trabajador agregado correctamente.','success');setSaving(false);loadAll()}
 async function desactivarTrabajador(id){if(!confirm('¿Desactivar trabajador?'))return;const {error}=await sb.from('trabajadores').update({estado:'Inactivo'}).eq('id',id);if(error)alert(error.message);loadAll()} window.desactivarTrabajador=desactivarTrabajador;
-async function guardarPersonal(){const nombre=$('pNombre').value.trim(),ci=$('pCI').value.trim(),cargo=$('pCargo').value.trim(),area=$('pArea').value.trim()||'Sin área',telefono=$('pTelefono').value.trim(),fecha_ingreso=$('pIngreso').value||null,direccion=$('pDireccion').value.trim(),sueldo_mensual=parseFloat($('pSueldo')?.value||0)||0,estado=$('pEstado').value||'Activo';if(!nombre){msg('msgPersonal','Escribe el nombre completo.','error');return}msg('msgPersonal','Guardando ficha...');setSaving(true);const {error}=await sb.from('trabajadores').insert([{nombre,area,estado,ci,cargo,telefono,fecha_ingreso,direccion,sueldo_mensual}]);if(error){setSaving(false);msg('msgPersonal','Error: '+error.message,'error');return}['pNombre','pCI','pCargo','pArea','pTelefono','pIngreso','pDireccion','pSueldo'].forEach(id=>{if($(id))$(id).value=''});$('pEstado').value='Activo';msg('msgPersonal','Ficha guardada correctamente.','success');setSaving(false);loadAll()}
-async function registrarAsistencia(){const selectedWorkerId=trabajadorSeleccionadoId || $('trabajadorSelect').value;const t=trabajadores.find(x=>String(x.id)===String(selectedWorkerId));const tipo=$('tipoRegistro').value,observacion=$('observacion').value.trim();if(!t){msg('msgAsistencia','Selecciona trabajador.','error');return} if(!confirm('Vas a guardar asistencia para: '+t.nombre+'\nTipo: '+tipo+'\n\n¿Confirmar?')) return;if(!fotoFile&&tipo!=='Ausente'&&tipo!=='Permiso'){msg('msgAsistencia','La foto es obligatoria.','error');return}msg('msgAsistencia','Guardando...');setSaving(true);let foto_url='';if(fotoFile){foto_url=await subirFoto(fotoFile,t.nombre,tipo);if(!foto_url)return}const yaExiste=registros.some(r=>String(r.trabajador_id)===String(t.id)&&r.tipo_registro===tipo);if(yaExiste&&!confirm('Este trabajador ya tiene una marcación de este tipo hoy. ¿Guardar otra de todas formas?')){setSaving(false);return}const ahora=new Date(),fecha=ahora.toISOString().slice(0,10),hora=ahora.toLocaleTimeString('es-BO',{hour:'2-digit',minute:'2-digit'});let estado=tipo==='Ausente'?'Ausente':tipo==='Permiso'?'Permiso':'Presente'; const minEntrada=parseHora(hora); if((tipo.includes('Entrada')||tipo.includes('Retraso')) && minEntrada!==null && minEntrada>HORA_ENTRADA_OFICIAL+MINUTOS_TOLERANCIA) estado='Retraso'; if(tipo==='Retraso') estado='Retraso';const {error}=await sb.from('asistencia').insert([{trabajador_id:t.id,trabajador_nombre:t.nombre,area:t.area,tipo_registro:tipo,estado,observacion,foto_url,fecha,hora}]);if(error){setSaving(false);msg('msgAsistencia','Error: '+error.message,'error');return}$('observacion').value='';$('fotoInput').value='';$('preview').style.display='none';if($('cameraVideo'))$('cameraVideo').style.display='none';fotoFile=null;cerrarCamara();msg('msgAsistencia','Asistencia registrada correctamente.','success');setSaving(false);loadAll()}
+async function guardarPersonal(){if(!requireAuth())return;const nombre=$('pNombre').value.trim(),ci=$('pCI').value.trim(),cargo=$('pCargo').value.trim(),area=$('pArea').value.trim()||'Sin área',centro_trabajo=$('pCentro')?.value||centroActivo||'Fábrica Santa Cruz',telefono=$('pTelefono').value.trim(),fecha_ingreso=$('pIngreso').value||null,direccion=$('pDireccion').value.trim(),sueldo_mensual=parseFloat($('pSueldo')?.value||0)||0,estado=$('pEstado').value||'Activo';if(!nombre){msg('msgPersonal','Escribe el nombre completo.','error');return} if(centro_trabajo==='Confecciones' && trabajadores.filter(t=>(t.centro_trabajo||'Fábrica Santa Cruz')==='Confecciones').length>=10){msg('msgPersonal','Confecciones permite máximo 10 trabajadores.','error');return}msg('msgPersonal','Guardando ficha...');setSaving(true);const {error}=await sb.from('trabajadores').insert([{nombre,area,estado,ci,cargo,telefono,fecha_ingreso,direccion,sueldo_mensual,centro_trabajo}]);if(error){setSaving(false);msg('msgPersonal','Error: '+error.message,'error');return}['pNombre','pCI','pCargo','pArea','pTelefono','pIngreso','pDireccion','pSueldo'].forEach(id=>{if($(id))$(id).value=''});$('pEstado').value='Activo';msg('msgPersonal','Ficha guardada correctamente.','success');setSaving(false);loadAll()}
+async function registrarAsistencia(){if(!requireAuth())return;const selectedWorkerId=trabajadorSeleccionadoId || $('trabajadorSelect').value;const t=trabajadores.find(x=>String(x.id)===String(selectedWorkerId));const tipo=$('tipoRegistro').value,observacion=$('observacion').value.trim();if(!t){msg('msgAsistencia','Selecciona trabajador.','error');return} if(!confirm('Vas a guardar asistencia para: '+t.nombre+'\nTipo: '+tipo+'\n\n¿Confirmar?')) return;if(!fotoFile&&tipo!=='Ausente'&&tipo!=='Permiso'){msg('msgAsistencia','La foto es obligatoria.','error');return}msg('msgAsistencia','Guardando...');setSaving(true);let foto_url='';if(fotoFile){foto_url=await subirFoto(fotoFile,t.nombre,tipo);if(!foto_url)return}const yaExiste=registros.some(r=>String(r.trabajador_id)===String(t.id)&&r.tipo_registro===tipo);if(yaExiste&&!confirm('Este trabajador ya tiene una marcación de este tipo hoy. ¿Guardar otra de todas formas?')){setSaving(false);return}const ahora=new Date(),fecha=ahora.toISOString().slice(0,10),hora=ahora.toLocaleTimeString('es-BO',{hour:'2-digit',minute:'2-digit'});let estado=tipo==='Ausente'?'Ausente':tipo==='Permiso'?'Permiso':'Presente'; const minEntrada=parseHora(hora); if((tipo.includes('Entrada')||tipo.includes('Retraso')) && minEntrada!==null && minEntrada>HORA_ENTRADA_OFICIAL+MINUTOS_TOLERANCIA) estado='Retraso'; if(tipo==='Retraso') estado='Retraso';const {error}=await sb.from('asistencia').insert([{trabajador_id:t.id,trabajador_nombre:t.nombre,area:t.area,tipo_registro:tipo,estado,observacion,foto_url,fecha,hora}]);if(error){setSaving(false);msg('msgAsistencia','Error: '+error.message,'error');return}$('observacion').value='';$('fotoInput').value='';$('preview').style.display='none';if($('cameraVideo'))$('cameraVideo').style.display='none';fotoFile=null;cerrarCamara();msg('msgAsistencia','Asistencia registrada correctamente.','success');setSaving(false);loadAll()}
 async function abrirCamara(){try{if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){msg('msgAsistencia','Este navegador no permite abrir cámara. Usa seleccionar archivo.','error');return}cerrarCamara();cameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});const video=$('cameraVideo');video.srcObject=cameraStream;video.style.display='block';$('preview').style.display='none';$('btnTomarFoto').disabled=false;$('btnCerrarCamara').disabled=false;msg('msgAsistencia','Cámara abierta. Presiona Tomar foto.','success')}catch(error){console.error(error);msg('msgAsistencia','No se pudo abrir la cámara. Revisa permisos o usa seleccionar archivo.','error')}}
 function cerrarCamara(){if(cameraStream){cameraStream.getTracks().forEach(track=>track.stop());cameraStream=null}if($('cameraVideo')){$('cameraVideo').srcObject=null;$('cameraVideo').style.display='none'}if($('btnTomarFoto'))$('btnTomarFoto').disabled=true;if($('btnCerrarCamara'))$('btnCerrarCamara').disabled=true}
 function tomarFoto(){const video=$('cameraVideo'),canvas=$('cameraCanvas');if(!video||!cameraStream){msg('msgAsistencia','Primero abre la cámara.','error');return}canvas.width=video.videoWidth||1280;canvas.height=video.videoHeight||720;canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);canvas.toBlob(blob=>{if(!blob){msg('msgAsistencia','No se pudo capturar la foto.','error');return}fotoFile=new File([blob],`asistencia_${Date.now()}.jpg`,{type:'image/jpeg'});$('preview').src=URL.createObjectURL(blob);$('preview').style.display='block';video.style.display='none';msg('msgAsistencia','Foto capturada correctamente.','success')},'image/jpeg',0.86)}
@@ -131,7 +304,7 @@ function renderSelect(){
    trabajadorSeleccionadoId=sel.value;
  }
 }
-function renderPersonal(){const box=$('listaPersonal');if(!box)return;const q=($('buscarPersonal')?.value||'').toLowerCase().trim();const lista=trabajadores.filter(t=>{const texto=[t.nombre,t.ci,t.cargo,t.area,t.telefono].join(' ').toLowerCase();return !q||texto.includes(q)});box.innerHTML=lista.map(t=>`<div class="personalCard"><div class="personalHead"><div style="display:flex;gap:12px;align-items:center"><div class="personalAvatar">${esc(t.nombre).charAt(0)}</div><div><b>${esc(t.nombre)}</b><br><span class="muted">${esc(t.cargo||'Sin cargo')} · ${esc(t.area||'Sin área')}</span></div></div>${badge(t.estado||'Activo')}</div><div class="personalMeta"><div><b>CI:</b> ${esc(t.ci||'-')}</div><div><b>Teléfono:</b> ${esc(t.telefono||'-')}</div><div><b>Ingreso:</b> ${esc(t.fecha_ingreso||'-')}</div><div><b>Dirección:</b> ${esc(t.direccion||'-')}</div></div><button class="btnDanger" onclick="desactivarTrabajador('${t.id}')">Desactivar</button></div>`).join('')||'<p class="muted">No hay fichas registradas.</p>'}
+function renderPersonal(){const box=$('listaPersonal');if(!box)return;const q=($('buscarPersonal')?.value||'').toLowerCase().trim();const lista=trabajadores.filter(t=>{const texto=[t.nombre,t.ci,t.cargo,t.area,t.telefono].join(' ').toLowerCase();return !q||texto.includes(q)});box.innerHTML=lista.map(t=>`<div class="personalCard"><div class="personalHead"><div style="display:flex;gap:12px;align-items:center"><div class="personalAvatar">${esc(t.nombre).charAt(0)}</div><div><b>${esc(t.nombre)}</b><br><span class="muted">${esc(t.cargo||'Sin cargo')} · ${esc(t.area||'Sin área')} · ${esc(t.centro_trabajo||'Fábrica Santa Cruz')}</span></div></div>${badge(t.estado||'Activo')}</div><div class="personalMeta"><div><b>CI:</b> ${esc(t.ci||'-')}</div><div><b>Teléfono:</b> ${esc(t.telefono||'-')}</div><div><b>Ingreso:</b> ${esc(t.fecha_ingreso||'-')}</div><div><b>Dirección:</b> ${esc(t.direccion||'-')}</div></div><button class="btnDanger" onclick="desactivarTrabajador('${t.id}')">Desactivar</button></div>`).join('')||'<p class="muted">No hay fichas registradas.</p>'}
 function renderReporte(){
  const datos=datosDiaTrabajadores();
  const retrasos=datos.filter(x=>x.estado==='Retraso').length;
@@ -345,7 +518,7 @@ function renderFeriados(){
  const box=$('listaFeriados'); if(!box)return;
  box.innerHTML=feriados.map(f=>`<div class="workerRow"><div><b>${esc(f.nombre)}</b><br><span class="muted">${f.fecha}</span></div><button class="btnDanger" onclick="eliminarFeriado('${f.id}')">Eliminar</button></div>`).join('') || '<p class="muted">No hay feriados registrados en este periodo.</p>';
 }
-async function agregarFeriado(){
+async function agregarFeriado(){if(!requireAuth())return;
  const fecha=$('feriadoFecha')?.value;
  const nombre=$('feriadoNombre')?.value.trim()||'Feriado';
  if(!fecha){alert('Elige la fecha del feriado.');return}
@@ -419,4 +592,4 @@ async function exportarPlanillaCSV(){
 }
 
 function realtime(){sb.channel('st-real').on('postgres_changes',{event:'*',schema:'public',table:'trabajadores'},loadAll).on('postgres_changes',{event:'*',schema:'public',table:'asistencia'},loadAll).subscribe()}
-init();
+document.addEventListener('DOMContentLoaded', init);

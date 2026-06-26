@@ -10,28 +10,35 @@
 <body>
   <button class="mobileMenuBtn" id="mobileMenuBtn">☰</button>
   <div class="mobileOverlay" id="mobileOverlay"></div>
-
-  
   <section class="loginScreen" id="loginScreen">
     <div class="loginCard">
       <div class="loginBrand">
         <div class="mark loginMark">ST</div>
         <div>
           <h2>SANDRA TEXTILES S.R.L.</h2>
-          <p>Sistema de asistencia</p>
+          <p>Acceso seguro al sistema</p>
         </div>
       </div>
+
+      <div class="loginHint">
+        <b>Usuarios creados:</b>
+        <span>Administrador: admin@sandratextiles.com</span>
+        <span>Fábrica Santa Cruz: fabrica@sandratextiles.com</span>
+        <span>Confecciones: confecciones@sandratextiles.com</span>
+      </div>
+
       <label>Correo
-        <input id="loginEmail" type="email" placeholder="usuario@empresa.com">
+        <input id="loginEmail" type="email" autocomplete="username" placeholder="usuario@empresa.com">
       </label>
       <label>Contraseña
-        <input id="loginPassword" type="password" placeholder="Contraseña">
+        <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Contraseña de Supabase">
       </label>
-      <button class="btnPrimary wide" id="btnLogin">Ingresar</button>
+      <button class="btnPrimary wide" id="btnLogin" type="button">Ingresar</button>
       <div id="msgLogin" class="msg"></div>
-      <p class="muted smallText">Cada usuario verá solo su centro de trabajo asignado.</p>
+      <p class="muted smallText">Sin iniciar sesión no se puede ver ni registrar información.</p>
     </div>
   </section>
+
 
 
   <aside class="sidebar">
@@ -43,7 +50,7 @@
           <div class="textiles">TEXTILES S.R.L.</div>
         </div>
       </div>
-      <div class="brandBadge">V4.3 Login</div>
+      <div class="brandBadge">V4.3.1 Login Seguro</div>
     </div>
 
     <nav class="navMenu">

@@ -1,22 +1,23 @@
-SANDRA TEXTILES S.R.L. - V4.1.7 RETRASOS Y AUSENTES
+SANDRA TEXTILES S.R.L. - V4.3.1 LOGIN SEGURO
 
-Correcciones:
-- Detecta retraso automático si la entrada es después de 08:00.
-- Ya no depende solo de elegir "Retraso" manualmente.
-- Dashboard muestra lista de:
-  * Llegaron tarde
-  * No llegaron
-- Reportes muestra conteo de retrasos y ausentes.
-- En reportes, el estado mostrado también se calcula automáticamente.
-- Planillas toman retrasos automáticos.
+Corrección:
+- Sin login ya no se ve el sistema.
+- Sin login ya no permite insertar datos.
+- El botón de login valida correo y contraseña con Supabase Auth.
+- El administrador puede elegir entre:
+  * Todos
+  * Fábrica Santa Cruz
+  * Confecciones
+- Encargados quedan fijos a su centro de trabajo.
+- La pantalla muestra los correos de acceso. La contraseña es la que creaste en Supabase.
 
-Regla actual:
-Entrada después de 08:00 = Retraso.
-Sin entrada registrada = Ausente.
-Permiso = Permiso.
+Usuarios:
+- admin@sandratextiles.com
+- fabrica@sandratextiles.com
+- confecciones@sandratextiles.com
 
 Actualizar:
-1. Descomprime este ZIP.
-2. Sube todo a GitHub reemplazando archivos.
-3. Commit: Sandra Textiles V4.1.7 Retrasos y ausentes.
-4. Espera que Vercel diga READY.
+1. Sube este ZIP descomprimido a GitHub.
+2. Commit: Sandra Textiles V4.3.1 Login Seguro.
+3. Espera Vercel READY.
+4. Prueba entrar con admin@sandratextiles.com y la contraseña que creaste.

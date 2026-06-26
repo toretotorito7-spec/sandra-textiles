@@ -128,3 +128,116 @@ select,input,button{font-size:15px;border-radius:12px;border:1px solid var(--lin
 @media(max-width:900px){
   .alertGrid,.reportAlerts{grid-template-columns:1fr}
 }
+
+/* V4.2 Centros de trabajo */
+.centroBadge{
+  display:inline-block;
+  margin-top:10px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:8px 12px;
+  background:rgba(255,255,255,.04);
+  color:var(--gold2);
+}
+#modoAcceso{
+  min-width:230px;
+}
+@media(max-width:900px){
+  #modoAcceso{width:100%;min-width:0}
+}
+
+/* V4.3 Login y permisos */
+body:not(.autenticado) .sidebar,
+body:not(.autenticado) .main,
+body:not(.autenticado) .mobileMenuBtn{
+  display:none!important;
+}
+.loginScreen{
+  position:fixed;
+  inset:0;
+  z-index:100;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:radial-gradient(circle at top left,#1d2f3b,#071018 68%);
+}
+.loginCard{
+  width:min(440px,94vw);
+  border:1px solid var(--line);
+  border-radius:24px;
+  padding:26px;
+  background:rgba(17,29,39,.96);
+  box-shadow:var(--shadow);
+}
+.loginBrand{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  margin-bottom:20px;
+}
+.loginMark{font-size:60px}
+.loginCard h2{margin:0;color:white}
+.loginCard p{margin:5px 0 0;color:var(--gold2)}
+.loginCard label{
+  display:grid;
+  gap:8px;
+  margin-bottom:14px;
+  color:var(--gold2);
+}
+.smallText{font-size:13px;margin-top:14px!important}
+
+/* V4.3.1 Login seguro */
+body:not(.autenticado) .sidebar,
+body:not(.autenticado) .main,
+body:not(.autenticado) .mobileMenuBtn,
+body:not(.autenticado) .mobileOverlay{
+  display:none!important;
+}
+body.autenticado .loginScreen{display:none!important}
+.loginScreen{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:radial-gradient(circle at top left,#1d2f3b,#071018 68%);
+}
+.loginCard{
+  width:min(470px,94vw);
+  border:1px solid var(--line);
+  border-radius:24px;
+  padding:26px;
+  background:rgba(17,29,39,.98);
+  box-shadow:var(--shadow);
+}
+.loginBrand{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+.loginMark{font-size:60px}
+.loginCard h2{margin:0;color:white}
+.loginCard p{margin:5px 0 0;color:var(--gold2)}
+.loginCard label{display:grid;gap:8px;margin-bottom:14px;color:var(--gold2)}
+.loginHint{
+  display:grid;
+  gap:5px;
+  border:1px solid rgba(199,168,103,.22);
+  border-radius:14px;
+  padding:12px;
+  margin-bottom:16px;
+  background:rgba(255,255,255,.035);
+  font-size:13px;
+}
+.loginHint span{color:var(--muted)}
+.smallText{font-size:13px;margin-top:14px!important}
+.centroBadge{
+  display:inline-block;
+  margin-top:10px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:8px 12px;
+  background:rgba(255,255,255,.04);
+  color:var(--gold2);
+}
+#modoAcceso{min-width:230px}
+@media(max-width:900px){#modoAcceso{width:100%;min-width:0}}
