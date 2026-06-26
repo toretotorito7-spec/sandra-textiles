@@ -1,16 +1,16 @@
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-let trabajadores=[],registros=[],fotoFile=null,cameraStream=null,trabajadorSeleccionadoId=null;
+let trabajadores=[],registros=[],fotoFile=null,cameraStream=null,trabajadorSeleccionadoId=null,planillaRegistros=[],planillaResumen=[],planillaDetalle=[];
 const $=id=>document.getElementById(id);
 const today=()=>new Date().toISOString().slice(0,10);
 function msg(id,t,c=''){const e=$(id);if(!e)return;e.textContent=t;e.className='msg '+c}
 function setSaving(show){const el=$('savingOverlay');if(el)el.classList.toggle('show',!!show)}
 function esc(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;")}
 function init(){
- $('fechaFiltro').value=today();
+ $('fechaFiltro').value=today(); if($('fechaPlanilla')) $('fechaPlanilla').value=today();
  if($('mobileMenuBtn')) $('mobileMenuBtn').onclick=()=>document.body.classList.toggle('menuOpen');
  if($('mobileOverlay')) $('mobileOverlay').onclick=()=>document.body.classList.remove('menuOpen');
  document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>show(b.dataset.view,b));
- $('btnActualizar').onclick=loadAll;$('btnAgregarTrabajador').onclick=agregarTrabajador;$('btnGuardarAsistencia').onclick=registrarAsistencia;$('cerrarFoto').onclick=cerrarFoto;$('fechaFiltro').onchange=loadAll;
+ $('btnActualizar').onclick=loadAll;$('btnAgregarTrabajador').onclick=agregarTrabajador;$('btnGuardarAsistencia').onclick=registrarAsistencia;$('cerrarFoto').onclick=cerrarFoto;$('fechaFiltro').onchange=loadAll; if($('btnCalcularPlanilla')) $('btnCalcularPlanilla').onclick=calcularPlanilla; if($('btnExportarPlanilla')) $('btnExportarPlanilla').onclick=exportarPlanillaCSV; if($('periodoPlanilla')) $('periodoPlanilla').onchange=calcularPlanilla; if($('fechaPlanilla')) $('fechaPlanilla').onchange=calcularPlanilla; if($('trabajadorPlanilla')) $('trabajadorPlanilla').onchange=calcularPlanilla;
  if($('btnActualizarReporte')) $('btnActualizarReporte').onclick=loadAll; if($('btnExportarCSV')) $('btnExportarCSV').onclick=exportarCSV;
  if($('btnGuardarPersonal')) $('btnGuardarPersonal').onclick=guardarPersonal;
  if($('buscarTrabajador')) $('buscarTrabajador').oninput=renderTrabajadores;
@@ -23,7 +23,7 @@ function init(){
  realtime();loadAll();setInterval(()=>{if(!window.__loadingST)loadAll()},5000);
 }
 function show(v,b){document.querySelectorAll('.view').forEach(x=>x.classList.add('hidden'));$(v).classList.remove('hidden');document.querySelectorAll('.nav').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.body.classList.remove('menuOpen');loadAll()}
-async function loadAll(){window.__loadingST=true;await cargarTrabajadores();await cargarRegistros();renderDashboard();renderTrabajadores();renderSelect();renderReporte();renderUltimasMarcaciones();renderPersonal();renderPlanillas();if($('lastUpdate'))$('lastUpdate').textContent='Actualizado: '+new Date().toLocaleTimeString('es-BO',{hour:'2-digit',minute:'2-digit'});window.__loadingST=false}
+async function loadAll(){window.__loadingST=true;await cargarTrabajadores();await cargarRegistros();renderDashboard();renderTrabajadores();renderSelect();renderPlanillaSelect();renderReporte();renderUltimasMarcaciones();renderPersonal();renderPlanillas();if($('lastUpdate'))$('lastUpdate').textContent='Actualizado: '+new Date().toLocaleTimeString('es-BO',{hour:'2-digit',minute:'2-digit'});window.__loadingST=false}
 async function cargarTrabajadores(){const {data,error}=await sb.from('trabajadores').select('*').neq('estado','Inactivo').order('created_at',{ascending:true});if(error){alert('Error trabajadores: '+error.message);return}trabajadores=data||[]}
 async function cargarRegistros(){const {data,error}=await sb.from('asistencia').select('*').eq('fecha',$('fechaFiltro').value||today()).order('created_at',{ascending:true});if(error){registros=[];console.warn(error.message);return}registros=data||[]}
 async function agregarTrabajador(){const nombre=$('nuevoNombre').value.trim(),area=$('nuevaArea').value.trim()||'Sin área';if(!nombre){msg('msgTrabajador','Escribe el nombre.','error');return}msg('msgTrabajador','Guardando...');setSaving(true);const {error}=await sb.from('trabajadores').insert([{nombre,area,estado:'Activo'}]);if(error){setSaving(false);msg('msgTrabajador','Error: '+error.message,'error');return}$('nuevoNombre').value='';$('nuevaArea').value='';msg('msgTrabajador','Trabajador agregado correctamente.','success');setSaving(false);loadAll()}
@@ -98,6 +98,152 @@ function exportarCSV(){
  const a=document.createElement('a');
  a.href=url;
  a.download=`reporte_asistencia_${fecha}.csv`;
+ a.click();
+ URL.revokeObjectURL(url);
+}
+
+
+function renderPlanillaSelect(){
+ const sel=$('trabajadorPlanilla'); if(!sel) return;
+ const actual=sel.value;
+ sel.innerHTML='<option value="">Todos</option>'+trabajadores.map(t=>`<option value="${t.id}">${esc(t.nombre)} - ${esc(t.area||'Sin área')}</option>`).join('');
+ if(actual && trabajadores.some(t=>String(t.id)===String(actual))) sel.value=actual;
+}
+function rangoPlanilla(){
+ const base=$('fechaPlanilla')?.value || today();
+ const tipo=$('periodoPlanilla')?.value || 'dia';
+ const d=new Date(base+'T12:00:00');
+ let ini=new Date(d), fin=new Date(d);
+ if(tipo==='semana'){
+   const day=d.getDay() || 7;
+   ini.setDate(d.getDate()-day+1);
+   fin=new Date(ini); fin.setDate(ini.getDate()+6);
+ }else if(tipo==='mes'){
+   ini=new Date(d.getFullYear(),d.getMonth(),1,12,0,0);
+   fin=new Date(d.getFullYear(),d.getMonth()+1,0,12,0,0);
+ }
+ const f=x=>x.toISOString().slice(0,10);
+ return {tipo, inicio:f(ini), fin:f(fin)};
+}
+function minutosAHoras(min){
+ min=Math.max(0,Math.round(min||0));
+ const h=Math.floor(min/60), m=min%60;
+ return `${h}:${String(m).padStart(2,'0')}`;
+}
+function parseHora(hora){
+ const raw=String(hora||'').trim().toLowerCase();
+ if(!raw) return null;
+ const m=raw.match(/(\d{1,2})[:.](\d{2})/);
+ if(!m) return null;
+ let h=parseInt(m[1],10), min=parseInt(m[2],10);
+ const isPM=raw.includes('p') || raw.includes('pm');
+ const isAM=raw.includes('a') || raw.includes('am');
+ if(isPM && h<12) h+=12;
+ if(isAM && h===12) h=0;
+ return h*60+min;
+}
+function calcularHorasDia(rs){
+ const entrada=buscarRegistroPorTipo(rs,'entrada') || primerRegistroConHora(rs);
+ const salida12=buscarRegistroPorTipo(rs,'salida12');
+ const retorno=buscarRegistroPorTipo(rs,'retorno');
+ const salida18=buscarRegistroPorTipo(rs,'salida18');
+
+ const e=parseHora(entrada?.hora);
+ const s12=parseHora(salida12?.hora);
+ const r=parseHora(retorno?.hora);
+ const s18=parseHora(salida18?.hora);
+
+ let minutos=0;
+ if(e!==null && s12!==null && s12>e) minutos += s12-e;
+ if(r!==null && s18!==null && s18>r) minutos += s18-r;
+ if(minutos===0 && e!==null && s18!==null && s18>e) minutos=s18-e;
+ return {minutos, entrada, salida12, retorno, salida18};
+}
+function diasEntre(inicio, fin){
+ const out=[];
+ let d=new Date(inicio+'T12:00:00');
+ const end=new Date(fin+'T12:00:00');
+ while(d<=end){
+   out.push(d.toISOString().slice(0,10));
+   d.setDate(d.getDate()+1);
+ }
+ return out;
+}
+function estadoTrabajadorPorRegistros(rs){
+ if(!rs.length) return 'Ausente';
+ if(rs.some(r=>r.estado==='Retraso')) return 'Retraso';
+ if(rs.some(r=>r.estado==='Permiso')) return 'Permiso';
+ if(rs.some(r=>r.estado==='Ausente') && !rs.some(x=>x.hora && x.estado!=='Ausente')) return 'Ausente';
+ return 'Presente';
+}
+async function calcularPlanilla(){
+ const tabla=$('tablaPlanillas'), detalle=$('tablaDetallePlanilla');
+ if(!tabla || !detalle) return;
+ const {tipo,inicio,fin}=rangoPlanilla();
+ $('plPeriodoTexto').textContent = tipo==='dia' ? inicio : `${inicio} al ${fin}`;
+ tabla.innerHTML='<tr><td colspan="7" class="muted">Calculando...</td></tr>';
+ detalle.innerHTML='<tr><td colspan="8" class="muted">Cargando registros...</td></tr>';
+
+ let q=sb.from('asistencia').select('*').gte('fecha',inicio).lte('fecha',fin).order('fecha',{ascending:true}).order('created_at',{ascending:true});
+ const trabajadorFiltro=$('trabajadorPlanilla')?.value || '';
+ if(trabajadorFiltro) q=q.eq('trabajador_id',trabajadorFiltro);
+ const {data,error}=await q;
+ if(error){
+   tabla.innerHTML=`<tr><td colspan="7" class="error">Error: ${esc(error.message)}</td></tr>`;
+   detalle.innerHTML='';
+   return;
+ }
+ planillaRegistros=data||[];
+ const trabajadoresBase=trabajadorFiltro ? trabajadores.filter(t=>String(t.id)===String(trabajadorFiltro)) : trabajadores;
+ const dias=diasEntre(inicio,fin);
+ const resumen=[];
+ const det=[];
+
+ trabajadoresBase.forEach(t=>{
+   let totalMin=0, diasConRegistro=0, retrasos=0;
+   dias.forEach(fecha=>{
+     const rs=planillaRegistros.filter(r=>String(r.trabajador_id)===String(t.id) && r.fecha===fecha);
+     if(rs.length){
+       diasConRegistro++;
+       if(rs.some(r=>r.estado==='Retraso' || normalizarTipo(r.tipo_registro).includes('retraso'))) retrasos++;
+     }
+     const calc=calcularHorasDia(rs);
+     totalMin+=calc.minutos;
+     if(rs.length){
+       det.push({
+         fecha,
+         trabajador:t.nombre,
+         entrada:calc.entrada?.hora||'--',
+         salida12:calc.salida12?.hora||'--',
+         retorno:calc.retorno?.hora||'--',
+         salida18:calc.salida18?.hora||'--',
+         horas:minutosAHoras(calc.minutos),
+         estado:estadoTrabajadorPorRegistros(rs)
+       });
+     }
+   });
+   const faltas=Math.max(0,dias.length-diasConRegistro);
+   resumen.push({trabajador:t.nombre, area:t.area||'Sin área', diasConRegistro, horas:minutosAHoras(totalMin), minutos:totalMin, retrasos, faltas, detalle:`${diasConRegistro}/${dias.length} días`});
+ });
+ planillaResumen=resumen;
+ planillaDetalle=det;
+ $('plTotalHoras').textContent=minutosAHoras(resumen.reduce((a,b)=>a+b.minutos,0));
+ $('plTotalTrabajadores').textContent=resumen.length;
+ tabla.innerHTML=resumen.map(r=>`<tr><td>${esc(r.trabajador)}</td><td>${esc(r.area)}</td><td>${r.diasConRegistro}</td><td><b>${r.horas}</b></td><td>${r.retrasos}</td><td>${r.faltas}</td><td>${esc(r.detalle)}</td></tr>`).join('') || '<tr><td colspan="7" class="muted">Sin trabajadores.</td></tr>';
+ detalle.innerHTML=det.map(r=>`<tr><td>${r.fecha}</td><td>${esc(r.trabajador)}</td><td>${r.entrada}</td><td>${r.salida12}</td><td>${r.retorno}</td><td>${r.salida18}</td><td><b>${r.horas}</b></td><td>${badge(r.estado)}</td></tr>`).join('') || '<tr><td colspan="8" class="muted">Sin registros en este periodo.</td></tr>';
+}
+async function exportarPlanillaCSV(){
+ if(!planillaResumen.length) await calcularPlanilla();
+ if(!planillaResumen.length) return;
+ const {tipo,inicio,fin}=rangoPlanilla();
+ const headers=['Periodo','Inicio','Fin','Trabajador','Area','Dias con registro','Horas trabajadas','Retrasos','Faltas estimadas','Detalle'];
+ const rows=planillaResumen.map(r=>[tipo,inicio,fin,r.trabajador,r.area,r.diasConRegistro,r.horas,r.retrasos,r.faltas,r.detalle]);
+ const csv=[headers,...rows].map(row=>row.map(v=>`"${String(v).replaceAll('"','""')}"`).join(',')).join('\n');
+ const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement('a');
+ a.href=url;
+ a.download=`planilla_horas_${tipo}_${inicio}_${fin}.csv`;
  a.click();
  URL.revokeObjectURL(url);
 }

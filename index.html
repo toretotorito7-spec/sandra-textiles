@@ -20,7 +20,7 @@
           <div class="textiles">TEXTILES S.R.L.</div>
         </div>
       </div>
-      <div class="brandBadge">V4.1.3 Fix</div>
+      <div class="brandBadge">V4.1.4 Horas</div>
     </div>
 
     <nav class="navMenu">
@@ -187,18 +187,84 @@
         <div id="listaPersonal" class="personalCards"></div>
       </div>
     </section>
-
     <section id="planillas" class="view hidden">
-      <div class="sectionHead"><h2>Planillas</h2><p class="muted">Módulo inicial para cálculo de asistencia y pagos.</p></div>
-      <div class="panel">
-        <div class="infoGrid">
-          <div class="infoCard"><b>Días trabajados</b><span id="plTrabajados">0</span></div>
-          <div class="infoCard"><b>Retrasos</b><span id="plRetrasos">0</span></div>
-          <div class="infoCard"><b>Faltas</b><span id="plFaltas">0</span></div>
+      <div class="sectionHead">
+        <div>
+          <h2>Horas trabajadas</h2>
+          <p class="muted">Cálculo por día, semana y mes para apoyo en el pago de sueldos.</p>
         </div>
-        <p class="muted">Vista temporal basada en asistencia del día. El sistema completo de planillas se desarrollará aparte.</p>
+        <button class="btnPrimary" id="btnExportarPlanilla">Descargar planilla CSV</button>
+      </div>
+
+      <div class="panel">
+        <div class="planillaFilters">
+          <label>Periodo
+            <select id="periodoPlanilla">
+              <option value="dia">Día</option>
+              <option value="semana">Semana</option>
+              <option value="mes">Mes</option>
+            </select>
+          </label>
+          <label>Fecha base
+            <input type="date" id="fechaPlanilla">
+          </label>
+          <label>Trabajador
+            <select id="trabajadorPlanilla">
+              <option value="">Todos</option>
+            </select>
+          </label>
+          <button class="btnPrimary" id="btnCalcularPlanilla">Calcular</button>
+        </div>
+
+        <div class="planillaResumen">
+          <div class="infoCard"><b>Periodo</b><span id="plPeriodoTexto">-</span></div>
+          <div class="infoCard"><b>Total horas</b><span id="plTotalHoras">0:00</span></div>
+          <div class="infoCard"><b>Trabajadores</b><span id="plTotalTrabajadores">0</span></div>
+        </div>
+
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Trabajador</th>
+                <th>Área</th>
+                <th>Días con registro</th>
+                <th>Horas trabajadas</th>
+                <th>Retrasos</th>
+                <th>Faltas estimadas</th>
+                <th>Detalle</th>
+              </tr>
+            </thead>
+            <tbody id="tablaPlanillas"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panelHead">
+          <h3>Detalle diario</h3>
+          <span class="muted">Entradas y salidas detectadas por día</span>
+        </div>
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Trabajador</th>
+                <th>Entrada</th>
+                <th>Salida 12:00</th>
+                <th>Retorno</th>
+                <th>Salida 18:00</th>
+                <th>Horas</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="tablaDetallePlanilla"></tbody>
+          </table>
+        </div>
       </div>
     </section>
+
 
     <section id="reportes" class="view hidden">
       <div class="sectionHead"><h2>Reportes</h2><p class="muted">Resumen diario de asistencia.</p><button class="btnPrimary" id="btnExportarCSV">Exportar CSV</button></div>

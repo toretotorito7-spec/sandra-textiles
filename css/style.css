@@ -54,3 +54,27 @@ select,input,button{font-size:15px;border-radius:12px;border:1px solid var(--lin
 @media(max-width:900px){
   .sectionHead .btnPrimary{width:100%;margin-top:12px}
 }
+
+/* V4.1.4 Horas trabajadas */
+.planillaFilters{
+  display:grid;
+  grid-template-columns:1fr 1fr 1.5fr auto;
+  gap:12px;
+  align-items:end;
+  margin-bottom:18px;
+}
+.planillaFilters label{
+  display:grid;
+  gap:8px;
+  color:var(--gold2);
+}
+.planillaResumen{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:16px;
+  margin-bottom:18px;
+}
+@media(max-width:900px){
+  .planillaFilters{grid-template-columns:1fr}
+  .planillaResumen{grid-template-columns:1fr}
+}
