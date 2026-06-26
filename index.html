@@ -11,6 +11,29 @@
   <button class="mobileMenuBtn" id="mobileMenuBtn">☰</button>
   <div class="mobileOverlay" id="mobileOverlay"></div>
 
+  
+  <section class="loginScreen" id="loginScreen">
+    <div class="loginCard">
+      <div class="loginBrand">
+        <div class="mark loginMark">ST</div>
+        <div>
+          <h2>SANDRA TEXTILES S.R.L.</h2>
+          <p>Sistema de asistencia</p>
+        </div>
+      </div>
+      <label>Correo
+        <input id="loginEmail" type="email" placeholder="usuario@empresa.com">
+      </label>
+      <label>Contraseña
+        <input id="loginPassword" type="password" placeholder="Contraseña">
+      </label>
+      <button class="btnPrimary wide" id="btnLogin">Ingresar</button>
+      <div id="msgLogin" class="msg"></div>
+      <p class="muted smallText">Cada usuario verá solo su centro de trabajo asignado.</p>
+    </div>
+  </section>
+
+
   <aside class="sidebar">
     <div class="brand">
       <div class="brandTop">
@@ -20,7 +43,7 @@
           <div class="textiles">TEXTILES S.R.L.</div>
         </div>
       </div>
-      <div class="brandBadge">V4.1.7 Retrasos</div>
+      <div class="brandBadge">V4.3 Login</div>
     </div>
 
     <nav class="navMenu">
@@ -48,8 +71,13 @@
         <h1>SANDRA TEXTILES S.R.L.</h1>
         <p>Sistema temporal corregido de asistencia y personal</p>
       </div>
-      <div class="topActions">
+      <div class="topActions"><button class="btnSecondary" id="btnLogout">Cerrar sesión</button>
         <div class="pill"><span class="statusDot"></span> Online</div>
+        <select id="modoAcceso">
+          <option value="Todos">Administrador - Todos</option>
+          <option value="Fábrica Santa Cruz">Fábrica Santa Cruz</option>
+          <option value="Confecciones">Confecciones</option>
+        </select>
         <select id="rolUsuario">
           <option>Administrador</option>
           <option>Encargado</option>
@@ -62,7 +90,7 @@
       <div class="hero">
         <div>
           <h2>Dashboard Enterprise</h2>
-          <p>Control diario de asistencia en Santa Cruz, visible desde cualquier dispositivo.</p>
+          <p>Control diario de asistencia por centro de trabajo.</p><div class="centroBadge">Centro actual: <b id="centroActualTexto">Todos</b></div>
         </div>
         <div class="controls">
           <input type="date" id="fechaFiltro">
@@ -172,6 +200,10 @@
         <div class="inlineForm">
           <input id="nuevoNombre" placeholder="Nombre del trabajador">
           <input id="nuevaArea" placeholder="Área">
+          <select id="nuevoCentro">
+            <option value="Fábrica Santa Cruz">Fábrica Santa Cruz</option>
+            <option value="Confecciones">Confecciones</option>
+          </select>
           <button class="btnPrimary" id="btnAgregarTrabajador">Agregar</button>
         </div>
         <div id="msgTrabajador" class="msg"></div>
@@ -190,6 +222,10 @@
           <input id="pCI" placeholder="CI">
           <input id="pCargo" placeholder="Cargo">
           <input id="pArea" placeholder="Área">
+          <select id="pCentro">
+            <option value="Fábrica Santa Cruz">Fábrica Santa Cruz</option>
+            <option value="Confecciones">Confecciones</option>
+          </select>
           <input id="pTelefono" placeholder="Teléfono">
           <input id="pIngreso" type="date">
           <input id="pDireccion" placeholder="Dirección">
@@ -209,7 +245,7 @@
       <div class="sectionHead">
         <div>
           <h2>Planilla mensual</h2>
-          <p class="muted">Cálculo de sueldo según horas trabajadas, feriados y sábados variables.</p>
+          <p class="muted">Cálculo separado por Fábrica Santa Cruz y Confecciones.</p>
         </div>
         <button class="btnPrimary" id="btnExportarPlanilla">Descargar planilla CSV</button>
       </div>
